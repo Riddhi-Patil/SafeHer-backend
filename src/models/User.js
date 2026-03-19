@@ -37,3 +37,5 @@ userSchema.pre('save', async function (next) {
 });
 
 userSchema.index({ location: '2dsphere' });
+
+export default mongoose.model('User', userSchema);

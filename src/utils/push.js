@@ -1,6 +1,6 @@
-const fetch = require('node-fetch');
+import fetch from 'node-fetch';
 
-async function sendPush(token, lat, lon) {
+const sendPush = async (token, lat, lon) => {
   try {
     await fetch('https://exp.host/--/api/v2/push/send', {
       method: 'POST',
@@ -18,6 +18,7 @@ async function sendPush(token, lat, lon) {
   } catch (err) {
     console.error('Push error:', err);
   }
-}
+};
 
-module.exports = sendPush;
+export default sendPush;
+

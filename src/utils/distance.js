@@ -1,4 +1,4 @@
-function getDistance(lat1, lon1, lat2, lon2) {
+const getDistance = (lat1, lon1, lat2, lon2) => {
   const R = 6371; // km
   const dLat = (lat2 - lat1) * Math.PI / 180;
   const dLon = (lon2 - lon1) * Math.PI / 180;
@@ -10,6 +10,7 @@ function getDistance(lat1, lon1, lat2, lon2) {
     Math.sin(dLon / 2) ** 2;
 
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
+};
 
-module.exports = getDistance;
+export default getDistance;
+

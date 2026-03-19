@@ -1,8 +1,9 @@
-const express = require('express');
+import express from 'express';
+import User from '../models/User.js';
+import getDistance from '../utils/distance.js';
+import sendPush from '../utils/push.js';
+
 const router = express.Router();
-const User = require('../models/User');
-const getDistance = require('../utils/distance');
-const sendPush = require('../utils/push');
 
 router.post('/community', async (req, res) => {
   console.log("BODY RECEIVED (sos/community):", req.body);
@@ -40,4 +41,5 @@ router.post('/community', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;
+
