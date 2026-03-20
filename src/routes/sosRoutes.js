@@ -1,7 +1,7 @@
+import { Expo } from 'expo-server-sdk';
 import express from 'express';
 import User from '../models/User.js';
 import getDistance from '../utils/distance.js';
-import { Expo } from 'expo-server-sdk';
 
 const router = express.Router();
 const expo = new Expo();
@@ -13,27 +13,32 @@ router.post('/community', async (req, res) => {
   console.log(`Sender location: [${latitude}, ${longitude}] from user: ${userId}`);
 
   try {
-    // 1. Fetch users who have location and pushToken (excluding sender)
-    const users = await User.find({
-      _id: { $ne: userId },
-      latitude: { $exists: true },
-      longitude: { $exists: true },
-      pushToken: { $exists: true }
-    });
-    console.log(`Potential users found in database: ${users.length}`);
+    // 1. Fetch ALL users (excluding sender) to debug why some are missing
+    const allUsers = await User.find({ _id: { $ne: userId } });
+    console.log(`--- SOS Debug: Total other users in DB: ${allUsers.length} ---`);
 
-    // 2. Filter nearby users using Haversine formula (2-5 km)
-    const nearbyUsers = users.filter(user => {
-      const distance = getDistance(
-        latitude,
-        longitude,
-        user.latitude,
-        user.longitude
-      );
-      return distance <= 5; // Using 5 km radius as requested
+    // 2. Filter nearby users using Haversine formula (5 km)
+    const nearbyUsers = allUsers.filter(user => {
+      // Check top-level fields first, then GeoJSON fields
+      const userLat = user.latitude || (user.location && user.location.coordinates && user.location.coordinates[1]);
+      const userLon = user.longitude || (user.location && user.location.coordinates && user.location.coordinates[0]);
+
+      if (userLat === undefined || userLon === undefined) {
+        console.log(`[Debug] User ${user.name} skipped: No location data`);
+        return false;
+      }
+
+      const distance = getDistance(latitude, longitude, userLat, userLon);
+      const isNearby = distance <= 5;
+
+      if (isNearby) {
+        console.log(`[Debug] User ${user.name} is NEARBY (${distance.toFixed(2)} km) but has pushToken: ${!!user.pushToken}`);
+      }
+      
+      return isNearby && user.pushToken; // Must have pushToken to receive notification
     });
 
-    console.log(`Nearby users within 5km: ${nearbyUsers.length}`);
+    console.log(`Final nearby recipients with tokens: ${nearbyUsers.length}`);
 
     // 3. Send Push Notifications using expo-server-sdk
     const messages = [];
