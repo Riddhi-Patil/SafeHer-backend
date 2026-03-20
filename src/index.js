@@ -1,29 +1,52 @@
-const express = require('express');
-const cors = require('cors');
-const mongoose = require('mongoose');
-const dotenv = require('dotenv');
+import cors from "cors";
+import dotenv from "dotenv";
+import express from "express";
+import mongoose from "mongoose";
+import authRoutes from "./routes/auth.js";
+import sosRoutes from "./routes/sosRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
 
 dotenv.config();
-
 const app = express();
-app.use(express.json());
-app.use(cors({ origin: '*', credentials: true }));
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/safeher_dev';
-const PORT = process.env.PORT || 3001;
+app.use(cors());
+app.use(express.json());
+
+// Request logger
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    const ms = Date.now() - start;
+    console.log(`[HTTP] ${req.method} ${req.originalUrl} -> ${res.statusCode} (${ms}ms)`);
+  });
+  next();
+});
+
+// Mount routes
+app.use("/auth", authRoutes);
+app.use("/users", userRoutes);
+app.use("/sos", sosRoutes);
+
+app.get("/", (req, res) => {
+  res.send("SafeHer backend is running 🚀");
+});
+
+app.get('/health', (req, res) => {
+  const states = ['disconnected', 'connected', 'connecting', 'disconnecting'];
+  const state = mongoose.connection?.readyState ?? 0;
+  res.json({ ok: true, db: states[state] });
+});
+
+const PORT = process.env.PORT || 5000;
+const MONGO_URI = process.env.MONGO_URI || process.env.MONGODB_URI;
 
 mongoose
-  .connect(MONGODB_URI, { autoIndex: true })
-  .then(() => console.log('MongoDB connected'))
+  .connect(MONGO_URI)
+  .then(() => {
+    console.log("✅ MongoDB connected successfully");
+    app.listen(PORT, "0.0.0.0", () => console.log(`Server started on port ${PORT}`));
+  })
   .catch((err) => {
-    console.error('MongoDB connection error:', err.message);
+    console.error("❌ MongoDB connection failed:", err);
     process.exit(1);
   });
-
-app.get('/health', (req, res) => res.json({ ok: true }));
-
-app.use('/auth', require('./routes/auth'));
-
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});

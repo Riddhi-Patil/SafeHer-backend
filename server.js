@@ -2,6 +2,9 @@ import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
 import mongoose from "mongoose";
+import authRoutes from "./src/routes/auth.js";
+import sosRoutes from "./src/routes/sosRoutes.js";
+import userRoutes from "./src/routes/userRoutes.js";
 
 dotenv.config();
 const app = express();
@@ -22,10 +25,8 @@ app.use((req, res, next) => {
   next();
 });
 
-// Mount auth routes
-import sosRoutes from "./src/routes/sosRoutes.js";
-import userRoutes from "./src/routes/userRoutes.js";
-
+// Mount routes
+app.use("/auth", authRoutes);
 app.use("/users", userRoutes);
 app.use("/sos", sosRoutes);
 
