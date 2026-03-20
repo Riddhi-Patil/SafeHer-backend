@@ -9,8 +9,15 @@ router.post('/updateLocation', async (req, res) => {
   const { userId, latitude, longitude } = req.body;
 
   try {
-    await User.findByIdAndUpdate(userId, { latitude, longitude });
-    console.log(`Location updated for user ${userId}`);
+    await User.findByIdAndUpdate(userId, { 
+      latitude, 
+      longitude,
+      location: {
+        type: 'Point',
+        coordinates: [longitude, latitude] // [longitude, latitude] for GeoJSON
+      }
+    });
+    console.log(`Location updated for user ${userId}: [${latitude}, ${longitude}]`);
     res.json({ success: true });
   } catch (err) {
     console.error("Error updating location:", err.message);
